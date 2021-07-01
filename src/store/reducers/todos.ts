@@ -5,6 +5,8 @@ const initialState = {
 const todos = (state = initialState, {type, payload}: any) => {
   switch (type) {
     case 'SET_TODOS':
+      // const pendingData = state.data.filter((e: any) => e.isPendingAdd);
+      // const newData = payload.filter((e: any) => !e.isPendingAdd);
       return {
         ...state,
         data: payload,

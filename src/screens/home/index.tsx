@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -21,7 +20,6 @@ import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import CheckBox from '@react-native-community/checkbox';
 import Feather from 'react-native-vector-icons/Feather';
 import {useSelector, useDispatch} from 'react-redux';
-import auth from '@react-native-firebase/auth';
 import {v4 as uuidv4} from 'react-native-uuid';
 
 import RNRestart from 'react-native-restart';
@@ -32,12 +30,19 @@ import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import Text from '@components/Text';
 
-import {deleteTodo, editTodo, getTodos, addTodo} from '@store/actions/todos';
+import {
+  deleteTodo,
+  editTodo,
+  getTodos,
+  addTodo,
+  syncTodo,
+} from '@store/actions/todos';
 
 export default function Home({navigation}: any) {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const todos = useSelector((state: any) => state.todos);
+  const apps = useSelector((state: any) => state.apps);
 
   const inputRef = React.useRef<ReactTextInput>(null);
 
@@ -48,6 +53,8 @@ export default function Home({navigation}: any) {
     createAt?: Date;
     createBy?: string;
   }>({title: ''});
+
+  const [_, forceUpdate] = React.useState(false);
 
   const onAddOrUpdateTodo = (): void => {
     const title = todo.title.trim();
@@ -139,13 +146,15 @@ export default function Home({navigation}: any) {
         value={item?.isDone}
         onValueChange={(isDone: boolean) => {
           dispatch(editTodo({...item, isDone}));
+          forceUpdate(n => !n);
         }}
       />
       <Text
         //@ts-ignore
         style={styles.textItem(item?.isDone)}
         maxLines={2}>
-        {item.title}
+        {item.title} {item?.isPendingAdd ? ' isPendingAdd' : ''}{' '}
+        {item?.isPendingEdit ? ' isPendingEdit' : ''}
       </Text>
       {item?.isDone ? (
         <TouchableOpacity
@@ -164,6 +173,12 @@ export default function Home({navigation}: any) {
       //@ts-ignore
       forceInsets={{top: 'never'}}
       style={styles.container}>
+      <Text type="semibold">isOffline :{apps.isOffline.toString()}</Text>
+      <Button onPress={() => dispatch(syncTodo())}>
+        <Text type="semibold" color="white">
+          SYNC
+        </Text>
+      </Button>
       <KeyboardAvoidingView
         enabled={Platform.OS === 'ios'}
         behavior={Platform.select({ios: 'padding'})}
